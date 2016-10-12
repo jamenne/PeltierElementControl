@@ -23,7 +23,7 @@ Created by Janine Müller on 07.10.2016
 
 using namespace std;
 
-//---------------------MultiMeter class---------------------//
+//---------------------Pelztier class---------------------//
 
 // Constructor
 Pelztier::Pelztier()
@@ -38,4 +38,10 @@ Pelztier::Pelztier()
 
 //Destructor
 Pelztier::~Pelztier(){}
+
+
+Pelztier::ReturnTemperature(){
+
+
+}
 

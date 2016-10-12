@@ -20,6 +20,7 @@ class Pelztier
 public:
 	Pelztier();
 	~Pelztier();
+	static Pelztier* Instance();
 
 private:
 
