@@ -21,6 +21,10 @@ int main(int argc, char const *argv[])
 	MultiMeter* MultiM = new MultiMeter();
 
 	MultiM->Initialize4Wire(masterUD, 18);
+
+	SourceMeter* SourceM = new SourceMeter();
+
+	SourceM->InitializeCurrentSource(masterUD, 26, "2");
 	
 	return 0;
 }
