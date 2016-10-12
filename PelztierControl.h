@@ -21,8 +21,6 @@ public:
 	Pelztier();
 	~Pelztier();
 
-	void Initialize(int masterUD, int pad);
-
 private:
 
 	double _value;
