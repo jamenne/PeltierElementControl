@@ -32,27 +32,47 @@ Pelztier::Pelztier(SourceMeter &SourceM, int smuX, MultiMeter &MultiM):_SourceM(
 	_value=314; // resistance in Ohm
 	_temperature=314; // temperature in °C
 	_current=314; // current
-	_voltage=314; // voltage
 };
 
 //Destructor
 Pelztier::~Pelztier(){};
 
-void Pelztier::Initialize(int masterUD, int SourceMeterPad, int MultiMeterPad, string voltagelimit){
+MultiMeter Pelztier::GetMultiMeter(){
 
-	_SourceM.Initialize(masterUD, SourceMeterPad);
-	_SourceM.SelectCurrentFunction(this->_smuX);
-	_SourceM.SetVoltageLimit(this->_smuX,voltagelimit);
-	_SourceM.SetOutputOnOff(this->_smuX,true);
+	return _MultiM;
+}
 
-	_MultiM.Initialize(masterUD, MultiMeterPad);
-	_MultiM.Set4WireFunction();
-	_MultiM.SetAutorange4Wire();
-	_MultiM.SetTriggerContinously();
+SourceMeter Pelztier::GetSourceMeter(){
+
+	return _SourceM;
+}
+
+int Pelztier::GetSourceMeterChannel(){
+
+	return _smuX;
+}
+
+void Pelztier::Initialize(int masterUD, int MultiMeterPad, string voltagelimit){
+
+	//this->_SourceM.Initialize(masterUD, SourceMeterPad);
+	this->_SourceM.SelectCurrentFunction(this->_smuX);
+	this->_SourceM.SetVoltageLimit(this->_smuX,voltagelimit);
+	this->_SourceM.SetOutputOnOff(this->_smuX,true);
+
+	this->_MultiM.Initialize(masterUD, MultiMeterPad);
+	this->_MultiM.Set4WireFunction();
+	this->_MultiM.SetAutorange4Wire();
+	this->_MultiM.SetTriggerContinously();
 
 }
 
-void Pelztier::SetCurrent(string current){
+void Pelztier::Close(){
+	this->SetSourceCurrent("0");
+	_SourceM.SetOutputOnOff(this->_smuX,false);
+
+}
+
+void Pelztier::SetSourceCurrent(string current){
 
 	_SourceM.SetSourceCurrent(this->_smuX, current);
 	stringstream ss;
@@ -62,10 +82,11 @@ void Pelztier::SetCurrent(string current){
 
 }
 
-void Pelztier::Close(){
-	this->SetCurrent("0");
-	_SourceM.SetOutputOnOff(this->_smuX,false);
+double Pelztier::GetSourceCurrent(){
 
+	_current = _SourceM.GetSourceCurrent(_smuX);
+
+	return _current;
 }
 
 // Steinhart-Hart equiation: 1/T = 1/T_0 + 1/B*ln(R/R_0)
@@ -91,11 +112,14 @@ double Pelztier::GetTemperature(){
 	return this->_temperature;
 }
 
-double Pelztier::GetSourceCurrent(){
+double Pelztier::MeasureCurrent(){
 
-	_current = _SourceM.GetSourceCurrent(_smuX);
+	return this->_SourceM.MeasureI(this->_smuX);
+}
 
-	return _current;
+double Pelztier::MeasureVoltage(){
+
+	return this->_SourceM.MeasureV(this->_smuX);
 }
 
 vector<double> Pelztier::MeasureIV(){
@@ -104,14 +128,11 @@ vector<double> Pelztier::MeasureIV(){
 
 	iv = _SourceM.MeasureIV(_smuX);
 
-	this->_current = iv[0];
-	this->_voltage = iv[1];
-
 	return iv;
 
 }
 
-// Saftey function, that target temperature is not set to temp out of bounds of MPPC (-25°C to 25°C)
+// Saftey function, that target temperature is not set to temp out of bounds of MPPC (-25°C to 25°C) or current over 1A
 double Pelztier::Constrain(double x, double a, double b){
 
 	if (x<a) return a;
@@ -121,7 +142,7 @@ double Pelztier::Constrain(double x, double a, double b){
 	else return x;
 }
 
-// 
+// Controller to control the temperature of the peltier element, regulates the current with an integral function
 void Pelztier::TemperatureController(double temp_target){
 
 	temp_target = Constrain(temp_target, -25, 25);
@@ -192,7 +213,7 @@ void Pelztier::TemperatureController(double temp_target){
 
 		ss << current;
 
-		this->SetCurrent(ss.str());
+		this->SetSourceCurrent(ss.str());
 
 		ss.str("");
 
@@ -201,6 +222,87 @@ void Pelztier::TemperatureController(double temp_target){
 	}
 
 }
+
+// Controller to control the temperature of the peltier element, regulates the current with an integral function
+// no while(true) loop
+// void Pelztier::TemperatureController(vector<double> TempDiff, double temp_target){
+
+// 	temp_target = Constrain(temp_target, -25, 25);
+// 	double temp;
+
+// 	double temp_diff;
+
+// 	uint index = 0;
+// 	double integral = 0;
+
+// 	double r_fac = 20e-6;
+
+// 	double current = 0;
+
+// 	stringstream ss;
+
+// 	fstream file;
+
+// 	time_t sec = time(NULL);
+
+// 	tm *uhr = localtime(&sec);
+
+// 	stringstream path;
+
+// 	path << "data/TContollerMeasurement_" << uhr->tm_year-100 << uhr->tm_mon+1 << uhr->tm_mday << "-" << uhr->tm_hour << uhr->tm_min << uhr->tm_sec << ".txt";
+
+// 	vector<double> measure(2,0);
+
+// 	while(true){
+
+// 		// Read MultiMeter and get temperature
+// 		temp = this->GetTemperature();
+		
+// 		measure = this->MeasureIV();
+
+// 		file.open(path.str().c_str(), fstream::in | fstream::out | fstream::app);
+
+// 		file << temp << "\t" << measure[0] << "\t" << measure[1] << endl;
+
+// 		file.close();
+
+// 		// integration
+// 		temp_diff = temp_target - temp;
+
+// 		integral = integral - TempDiff[index];
+// 		TempDiff[index] = temp_diff;
+// 		integral = integral + TempDiff[index];
+// 		cout << "integral:\t" << integral << endl;
+
+// 		if (index < TempDiff.size()-1)
+// 		{
+// 			index++;
+// 		}
+
+// 		else index = 0;
+
+// 		// peltier control
+
+// 		// max integral 20*50 (tempdiff) = 7500 
+// 		// max änderung des stroms 1mA gewünscht
+// 		// -> x=10-6
+// 		current = current - r_fac * integral;
+// 		cout << "Current:\t" << current << endl;
+
+// 		current = Constrain(current, 0, 0.5);
+// 		cout << "Current nach Constrain:\t" << current << endl;
+
+// 		ss << current;
+
+// 		this->SetCurrent(ss.str());
+
+// 		ss.str("");
+
+// 		// sleep for 1 second
+// 		sleep(1);
+// 	}
+
+// }
 
 
 void Pelztier::WriteMeasurementToFile(vector<double> measurement, double temp, string path){
@@ -234,7 +336,7 @@ void Pelztier::ITCurve(double minCurr, double maxCurr, double step){
 		stringstream ss;
 		ss << Curr;
 
-		this->SetCurrent(ss.str());
+		this->SetSourceCurrent(ss.str());
 
 		sleep(5*60);
 

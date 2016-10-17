@@ -23,11 +23,17 @@ class Pelztier
 public:
 	Pelztier(SourceMeter &SourceM, int smuX, MultiMeter &MultiM);
 	~Pelztier();
-	void Initialize(int masterUD, int SourceMeterPad, int MultiMeterPad, string voltagelimit);
+	MultiMeter GetMultiMeter();
+	SourceMeter GetSourceMeter();
+	int GetSourceMeterChannel();
+	void Initialize(int masterUD, int MultiMeterPad, string voltagelimit);
+	void Close();
 
-	void SetCurrent(string current);
-	double GetTemperature();
+	void SetSourceCurrent(string current);
 	double GetSourceCurrent();
+	double GetTemperature();
+	double MeasureCurrent();
+	double MeasureVoltage();
 	vector<double> MeasureIV();
 
 	double Constrain(double x, double a, double b);
@@ -36,13 +42,12 @@ public:
 	void WriteMeasurementToFile(vector<double> measurement, double temp, string path);
 	void ITCurve(double minCurr, double maxCurr, double step);
 
-	void Close();
+
 private:
 
 	double _value; // resistance in Ohm
 	double _temperature; // temperature in °C
-	double _current; // current
-	double _voltage; // voltage
+	double _current; // source current
 	SourceMeter _SourceM; // SourceMeter as current source for peltier
 	int _smuX; // which Output of SourceMeter
 	MultiMeter _MultiM; // MultiMeter for 4 wire measurement of resistance
