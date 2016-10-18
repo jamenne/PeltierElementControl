@@ -1,6 +1,6 @@
 /*
 
-MultiMeter.cpp
+PelztierControl.cpp
 
 
 Created by Janine Müller on 07.10.2016
@@ -9,7 +9,6 @@ Created by Janine Müller on 07.10.2016
 
 #include <gpib/ib.h>
 #include <gpib/gpib_user.h>
-#include <string>
 #include <iostream>
 #include <cstdlib>
 #include <vector>
@@ -27,22 +26,28 @@ using namespace std;
 //---------------------Pelztier class---------------------//
 
 // Constructor
-Pelztier::Pelztier(SourceMeter &SourceM, int smuX, MultiMeter &MultiM):_SourceM(SourceM), _smuX(smuX), _MultiM(MultiM)
+Pelztier::Pelztier(SourceMeter &SourceM, int smuX, MultiMeter &MultiM) :
+	_SourceM(SourceM), 
+	_smuX(smuX), 
+	_MultiM(MultiM),
+	_value(314), //resistance in Ohm
+	_temperature(314), // temperature in °C
+	_current(314) // current in A
 {
-	_value=314; // resistance in Ohm
-	_temperature=314; // temperature in °C
-	_current=314; // current
+	
 };
 
 //Destructor
-Pelztier::~Pelztier(){};
+Pelztier::~Pelztier(){
 
-MultiMeter Pelztier::GetMultiMeter(){
+};
+
+MultiMeter& Pelztier::GetMultiMeter(){
 
 	return _MultiM;
 }
 
-SourceMeter Pelztier::GetSourceMeter(){
+SourceMeter& Pelztier::GetSourceMeter(){
 
 	return _SourceM;
 }
@@ -52,7 +57,7 @@ int Pelztier::GetSourceMeterChannel(){
 	return _smuX;
 }
 
-void Pelztier::Initialize(int masterUD, int MultiMeterPad, string voltagelimit){
+void Pelztier::Initialize(int masterUD, int SourceMeterPad, int MultiMeterPad, const std::string& voltagelimit){
 
 	//this->_SourceM.Initialize(masterUD, SourceMeterPad);
 	this->_SourceM.SelectCurrentFunction(this->_smuX);
@@ -305,7 +310,7 @@ void Pelztier::TemperatureController(double temp_target){
 // }
 
 
-void Pelztier::WriteMeasurementToFile(vector<double> measurement, double temp, string path){
+void Pelztier::WriteMeasurementToFile(vector<double> measurement, double temp, const std::string& path){
 
 	fstream file;
 	file.open(path.c_str(), fstream::in | fstream::out | fstream::app);

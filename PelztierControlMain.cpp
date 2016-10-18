@@ -26,7 +26,11 @@ int main(int argc, char const *argv[])
 	Pelztier Peltier(SourceM, 1, MultiM);
 
 	// masterUD, SourceMeterPad, MultiMeterPad, voltagelimit
-	Peltier.Initialize(masterUD, 26, 18, "0.6");
+	int SourceMeterPad = 26;
+	int MultiMeterPad = 18;
+	const std::string voltagelimit = "0.6";
+
+	Peltier.Initialize(masterUD, SourceMeterPad, MultiMeterPad, voltagelimit);
 
 	Peltier.TemperatureController(-20);
 

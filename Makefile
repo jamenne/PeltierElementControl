@@ -2,7 +2,7 @@ CXX		= g++
 CXXFLAGS	= -O2 -Wall 
 LDFLAGS		= -lgpib
 SRCFILES	= PelztierControl.cpp PelztierControlMain.cpp
-OBJFILES    = PelztierControl.o PelztierControlMain.o ../gpib/gpib.o ../MultiMeter/MultiMeter.o ../SourceMeter/SourceMeter.o
+OBJFILES    = PelztierControl.o PelztierControlMain.o ../MultiMeter/MultiMeter.o ../SourceMeter/SourceMeter.o ../gpib/gpib.o ../LogFileDev/LogDev.o
 
 PelztierControl:		$(OBJFILES)
 		$(CXX) $(OBJFILES) $(LDFLAGS) -o $@
