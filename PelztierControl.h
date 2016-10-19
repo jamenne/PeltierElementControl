@@ -12,9 +12,11 @@ Created by Janine Müller on 12.10.2016
 #define ____Pelztier__
 
 #include <string>
+#include <vector>
 
 #include "../SourceMeter/SourceMeter.h"
 #include "../MultiMeter/MultiMeter.h"
+#include "../LogFileDev/LogDev.h"
 
 
 
@@ -27,11 +29,12 @@ public:
 	~Pelztier();
 	MultiMeter& GetMultiMeter();
 	SourceMeter& GetSourceMeter();
+	LogDev& GetLogFile();
 	int GetSourceMeterChannel();
-	void Initialize(int masterUD, int SourceMeterPad, int MultiMeterPad, const std::string& voltagelimit);
+	void Initialize(const std::string& voltagelimit);
 	void Close();
 
-	void SetSourceCurrent(string current);
+	void SetSourceCurrent(const std::string current);
 	double GetSourceCurrent();
 	double GetTemperature();
 	double MeasureCurrent();
@@ -40,8 +43,9 @@ public:
 
 	double Constrain(double x, double a, double b);
 	void TemperatureController(double temp_target);
+	void OneTempControl(std::vector<double> &TempDiff, double &integral, int &index, double &current, double temp_target);
 
-	void WriteMeasurementToFile(vector<double> measurement, double temp, const std::string& path);
+	void WriteMeasurementToFile(std::vector<double> measurement, double temp, const std::string& path);
 	void ITCurve(double minCurr, double maxCurr, double step);
 
 
@@ -53,6 +57,7 @@ private:
 	double _value; // resistance in Ohm
 	double _temperature; // temperature in °C
 	double _current; // source current
+	LogDev _LogFile;
 
 };
 

@@ -18,8 +18,6 @@ Created by Janine Müller on 07.10.2016
 #include <cmath>
 
 #include "PelztierControl.h"
-#include "../MultiMeter/MultiMeter.h"
-#include "../SourceMeter/SourceMeter.h"
 
 using namespace std;
 
@@ -32,7 +30,8 @@ Pelztier::Pelztier(SourceMeter &SourceM, int smuX, MultiMeter &MultiM) :
 	_MultiM(MultiM),
 	_value(314), //resistance in Ohm
 	_temperature(314), // temperature in °C
-	_current(314) // current in A
+	_current(314), // current in A
+	_LogFile()
 {
 	
 };
@@ -44,30 +43,37 @@ Pelztier::~Pelztier(){
 
 MultiMeter& Pelztier::GetMultiMeter(){
 
-	return _MultiM;
+	return this->_MultiM;
 }
 
 SourceMeter& Pelztier::GetSourceMeter(){
 
-	return _SourceM;
+	return this->_SourceM;
+}
+
+LogDev& Pelztier::GetLogFile(){
+
+	return this->_LogFile;
 }
 
 int Pelztier::GetSourceMeterChannel(){
 
-	return _smuX;
+	return this->_smuX;
 }
 
-void Pelztier::Initialize(int masterUD, int SourceMeterPad, int MultiMeterPad, const std::string& voltagelimit){
+void Pelztier::Initialize(const std::string& voltagelimit){
 
 	//this->_SourceM.Initialize(masterUD, SourceMeterPad);
 	this->_SourceM.SelectCurrentFunction(this->_smuX);
 	this->_SourceM.SetVoltageLimit(this->_smuX,voltagelimit);
 	this->_SourceM.SetOutputOnOff(this->_smuX,true);
 
-	this->_MultiM.Initialize(masterUD, MultiMeterPad);
 	this->_MultiM.Set4WireFunction();
 	this->_MultiM.SetAutorange4Wire();
 	this->_MultiM.SetTriggerContinously();
+
+	this->_LogFile.Initialize("PelztierControl");
+	this->_LogFile.WriteString("date\ttemp\tcurrent\tvoltage");
 
 }
 
@@ -77,7 +83,7 @@ void Pelztier::Close(){
 
 }
 
-void Pelztier::SetSourceCurrent(string current){
+void Pelztier::SetSourceCurrent(const string current){
 
 	_SourceM.SetSourceCurrent(this->_smuX, current);
 	stringstream ss;
@@ -230,84 +236,63 @@ void Pelztier::TemperatureController(double temp_target){
 
 // Controller to control the temperature of the peltier element, regulates the current with an integral function
 // no while(true) loop
-// void Pelztier::TemperatureController(vector<double> TempDiff, double temp_target){
+void Pelztier::OneTempControl(vector<double> &TempDiff, double &integral, int &index, double &current, double temp_target){
 
-// 	temp_target = Constrain(temp_target, -25, 25);
-// 	double temp;
+	temp_target = Constrain(temp_target, -25, 25);
 
-// 	double temp_diff;
+	double temp;
 
-// 	uint index = 0;
-// 	double integral = 0;
+	double temp_diff;
 
-// 	double r_fac = 20e-6;
+	double r_fac = 20e-6;
 
-// 	double current = 0;
+	stringstream ss;
 
-// 	stringstream ss;
+	vector<double> measure(2,0);
 
-// 	fstream file;
+	//---------This is actually the loop--------//
 
-// 	time_t sec = time(NULL);
+	// Read MultiMeter and get temperature
+	temp = this->GetTemperature();
+	
+	measure = this->MeasureIV();
 
-// 	tm *uhr = localtime(&sec);
+	// save measurement in LogFile
+	this->_LogFile.WriteDoubleAndVector(temp, measure);
 
-// 	stringstream path;
+	// integration
+	temp_diff = temp_target - temp;
 
-// 	path << "data/TContollerMeasurement_" << uhr->tm_year-100 << uhr->tm_mon+1 << uhr->tm_mday << "-" << uhr->tm_hour << uhr->tm_min << uhr->tm_sec << ".txt";
+	integral = integral - TempDiff[index];
+	TempDiff[index] = temp_diff;
+	integral = integral + TempDiff[index];
+	cout << "integral:\t" << integral << endl;
 
-// 	vector<double> measure(2,0);
+	if (index < TempDiff.size()-1)
+	{
+		index++;
+	}
 
-// 	while(true){
+	else index = 0;
 
-// 		// Read MultiMeter and get temperature
-// 		temp = this->GetTemperature();
-		
-// 		measure = this->MeasureIV();
+	// peltier control
 
-// 		file.open(path.str().c_str(), fstream::in | fstream::out | fstream::app);
+	// max integral 20*50 (tempdiff) = 7500 
+	// max änderung des stroms 1mA gewünscht
+	// -> x=10-6
+	current = current - r_fac * integral;
+	cout << "Current:\t" << current << endl;
 
-// 		file << temp << "\t" << measure[0] << "\t" << measure[1] << endl;
+	current = Constrain(current, 0, 0.5);
+	cout << "Current nach Constrain:\t" << current << endl;
 
-// 		file.close();
+	ss << current;
 
-// 		// integration
-// 		temp_diff = temp_target - temp;
+	this->SetSourceCurrent(ss.str().c_str());
 
-// 		integral = integral - TempDiff[index];
-// 		TempDiff[index] = temp_diff;
-// 		integral = integral + TempDiff[index];
-// 		cout << "integral:\t" << integral << endl;
+	ss.str("");
 
-// 		if (index < TempDiff.size()-1)
-// 		{
-// 			index++;
-// 		}
-
-// 		else index = 0;
-
-// 		// peltier control
-
-// 		// max integral 20*50 (tempdiff) = 7500 
-// 		// max änderung des stroms 1mA gewünscht
-// 		// -> x=10-6
-// 		current = current - r_fac * integral;
-// 		cout << "Current:\t" << current << endl;
-
-// 		current = Constrain(current, 0, 0.5);
-// 		cout << "Current nach Constrain:\t" << current << endl;
-
-// 		ss << current;
-
-// 		this->SetCurrent(ss.str());
-
-// 		ss.str("");
-
-// 		// sleep for 1 second
-// 		sleep(1);
-// 	}
-
-// }
+}
 
 
 void Pelztier::WriteMeasurementToFile(vector<double> measurement, double temp, const std::string& path){

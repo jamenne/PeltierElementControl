@@ -7,6 +7,7 @@ Created by Janine Müller on 07.10.2016
 */
 
 #include <iostream>
+#include <fcntl.h>
 
 #include "../MultiMeter/MultiMeter.h"
 #include "../SourceMeter/SourceMeter.h"
@@ -16,23 +17,58 @@ Created by Janine Müller on 07.10.2016
 int main(int argc, char const *argv[])
 {
 
+	// ----------Flags for while(true) interrupt------------- //
+	int fd = STDIN_FILENO;
+	int flags = fcntl(fd, F_GETFL, 0);
+	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+
+
 	int masterUD = InitializeMaster();
 
+	// -------------------------SourceMeter----------------------------//
 	SourceMeter SourceM;
 
+	int SourceMeterPad = 26;
+
+	SourceM.Initialize(masterUD, SourceMeterPad);
+
+	
+
+	// -------------------------MultiMeter----------------------------//	
+
 	MultiMeter MultiM;
+
+	int MultiMeterPad = 18;
+
+	MultiM.Initialize(masterUD, MultiMeterPad);
+
+
+
+	// -------------------------Pelztier----------------------------//
 
 	// SourceMeter, Output, MultiMeter
 	Pelztier Peltier(SourceM, 1, MultiM);
 
-	// masterUD, SourceMeterPad, MultiMeterPad, voltagelimit
-	int SourceMeterPad = 26;
-	int MultiMeterPad = 18;
-	const std::string voltagelimit = "0.6";
+	const string voltagelimit = "0.6";
 
-	Peltier.Initialize(masterUD, SourceMeterPad, MultiMeterPad, voltagelimit);
+	Peltier.Initialize(voltagelimit);
 
-	Peltier.TemperatureController(-20);
+	double temp_target = 5;
+
+	int index = 0;
+
+	double integral = 0;
+
+	vector<double> TempDiff(10,0);
+
+	double current = 0;
+
+	do{
+		Peltier.OneTempControl(TempDiff, integral, index, current, temp_target);
+		sleep(1);
+	}while(getchar() != 'q');
+
+//	Peltier.TemperatureController(-20);
 
 //	Peltier.ITCurve(0, 0.4, 0.02);
 

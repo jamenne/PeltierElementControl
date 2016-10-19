@@ -12,4 +12,4 @@ clean:
 
 PelztierControl.o:	PelztierControl.cpp PelztierControl.h
 
-PelztierControlMain.o: PelztierControlMain.cpp PelztierControl.h ../gpib/gpib.h ../MultiMeter/MultiMeter.h ../SourceMeter/SourceMeter.h
+PelztierControlMain.o: PelztierControlMain.cpp PelztierControl.h
