@@ -73,7 +73,7 @@ void Pelztier::Initialize(const std::string& voltagelimit){
 	this->_MultiM.SetTriggerContinously();
 
 	this->_LogFile.Initialize("PelztierControl");
-	this->_LogFile.WriteString("date\ttemp\tcurrent\tvoltage");
+	this->_LogFile.WriteString("#date\ttemp\tcurrent\tvoltage");
 
 }
 
@@ -118,7 +118,7 @@ double Pelztier::GetTemperature(){
 
 	this->_temperature = 3410/(log(this->_value/9000)+3410/298.15)-273.15; // returns temperature in °C
 
-	cout << "Measured temperature to: " << this->_temperature << "°C" << endl;
+	cout << "Measured PELZTIER temperature to: " << this->_temperature << "°C" << endl;
 
 	return this->_temperature;
 }
@@ -244,7 +244,7 @@ void Pelztier::OneTempControl(vector<double> &TempDiff, double &integral, int &i
 
 	double temp_diff;
 
-	double r_fac = 20e-6;
+	double r_fac = 30e-6;
 
 	stringstream ss;
 
@@ -253,7 +253,7 @@ void Pelztier::OneTempControl(vector<double> &TempDiff, double &integral, int &i
 	//---------This is actually the loop--------//
 
 	// Read MultiMeter and get temperature
-	temp = this->GetTemperature();
+	temp = this->Pelztier::GetTemperature();
 	
 	measure = this->MeasureIV();
 
