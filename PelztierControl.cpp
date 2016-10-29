@@ -72,7 +72,10 @@ void Pelztier::Initialize(const std::string& voltagelimit){
 	this->_MultiM.SetAutorange4Wire();
 	this->_MultiM.SetTriggerContinously();
 
-	this->_LogFile.Initialize("PelztierControl");
+	stringstream ss;
+	ss << "PelztierControl_" << this->_smuX;
+
+	this->_LogFile.Initialize(ss.str().c_str());
 	this->_LogFile.WriteString("#date\ttemp\tcurrent\tvoltage");
 
 }
