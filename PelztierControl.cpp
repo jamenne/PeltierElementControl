@@ -121,7 +121,7 @@ double Pelztier::GetTemperature(){
 
 	this->_temperature = 3410/(log(this->_value/9000)+3410/298.15)-273.15; // returns temperature in °C
 
-	cout << "Measured PELZTIER temperature to: " << this->_temperature << "°C" << endl;
+	cout << "Measured PELZTIER " << this->_smuX << " temperature to: " << this->_temperature << "°C" << endl;
 
 	return this->_temperature;
 }
@@ -269,7 +269,7 @@ void Pelztier::OneTempControl(vector<double> &TempDiff, double &integral, int &i
 	integral = integral - TempDiff[index];
 	TempDiff[index] = temp_diff;
 	integral = integral + TempDiff[index];
-	cout << "integral:\t" << integral << endl;
+	//cout << "integral:\t" << integral << endl;
 
 	if (index < TempDiff.size()-1)
 	{
@@ -284,10 +284,10 @@ void Pelztier::OneTempControl(vector<double> &TempDiff, double &integral, int &i
 	// max änderung des stroms 1mA gewünscht
 	// -> x=10-6
 	current = current - r_fac * integral;
-	cout << "Current:\t" << current << endl;
+	//cout << "Current:\t" << current << endl;
 
 	current = Constrain(current, 0, 0.5);
-	cout << "Current nach Constrain:\t" << current << endl;
+	//cout << "Current nach Constrain:\t" << current << endl;
 
 	ss << current;
 
